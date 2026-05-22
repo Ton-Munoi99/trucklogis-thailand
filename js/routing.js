@@ -196,7 +196,7 @@ window.Routing = (function () {
   // Requires API key from https://developer.here.com
   // Set key in ApiSettings → stored in localStorage key 'tl_here_key'
   async function getRouteTruckHERE(originCoords, destCoords, truckParams = {}) {
-    const apiKey = localStorage.getItem('tl_here_key') || 'zvWjE4HMHV4HFpdRo5-5e-ITncL69N0bBR-f_EPkgZk';
+    const apiKey = 'zvWjE4HMHV4HFpdRo5-5e-ITncL69N0bBR-f_EPkgZk';
     if (!apiKey) {
       console.info('[Routing] HERE API key not set — falling back to OSRM');
       return null;
