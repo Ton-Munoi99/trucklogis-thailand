@@ -1,0 +1,30 @@
+[build]
+  publish = "."          # static files served from project root
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect API calls to Netlify Functions (backend proxy)
+[[redirects]]
+  from = "/api/fuel-price"
+  to   = "/.netlify/functions/fuel-price"
+  status = 200
+
+[[redirects]]
+  from = "/api/here-route"
+  to   = "/.netlify/functions/here-route"
+  status = 200
+
+[[redirects]]
+  from = "/api/here-geocode"
+  to   = "/.netlify/functions/here-geocode"
+  status = 200
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TruckLogis Thailand — คำนวณต้นทุนรถบรรทุก</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 240px;
+      --nav-bg:    #0D1B2A;
+      --bg:        #F0F4F8;
+      --card:      #FFFFFF;
+      --border:    #E2E8F0;
+      --text:      #0F172A;
+      --text2:     #475569;
+      --text3:     #94A3B8;
+      --blue:      #2563EB;
+      --green:     #059669;
+      --amber:     #D97706;
+      --red:       #DC2626;
+      --r:         8px;
+      --r-lg:      12px;
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); }
+    #root { width: 100%; height: 100vh; display: flex; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+    /* Leaflet map background — visible while tiles load */
+    .leaflet-container { background: #E8EDF2 !important; }
+    .leaflet-tile-pane { opacity: 0.85; }
+    .leaflet-popup-content-wrapper { font-family: 'Sarabun', sans-serif !important; border-radius: 10px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important; }
+    .leaflet-popup-tip { background: white !important; }
+
+    /* Number inputs */
+    input[type=number] { -moz-appearance: textfield; }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* Animations */
+    @keyframes fadeIn  { from { opacity: 0; transform: translateY(6px); }  to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin    { from { transform: rotate(0deg); }                 to { transform: rotate(360deg); } }
+    .fade-in  { animation: fadeIn  0.25s ease forwards; }
+    .slide-up { animation: slideUp 0.35s ease forwards; }
+
+    /* Selection colour */
+    ::selection { background: rgba(37,99,235,0.15); }
+
+    /* Leaflet zoom control */
+    .leaflet-control-zoom { border: 1px solid #E2E8F0 !important; border-radius: 8px !important; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
+    .leaflet-control-zoom-in,
+    .leaflet-control-zoom-out { font-size: 16px !important; color: #475569 !important; line-height: 28px !important; width: 28px !important; height: 28px !important; }
+
+    /* Loading screen */
+    #boot {
+      position: fixed; inset: 0; background: #0D1B2A;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; z-index: 9999; transition: opacity 0.4s ease;
+    }
+    #boot .logo { font-size: 48px; animation: bounceIn 0.6s ease; }
+    #boot .name { color: white; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    #boot .sub  { color: #2E4A61; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    #boot .bar  { width: 220px; height: 3px; background: #1A2E45; border-radius: 2px; overflow: hidden; margin-top: 8px; }
+    #boot .bar-fill {
+      height: 100%; background: linear-gradient(90deg, #2563EB, #3B82F6);
+      border-radius: 2px; animation: load 1.6s ease-in-out forwards;
+    }
+    @keyframes load { from { width: 0; } to { width: 100%; } }
+    @keyframes bounceIn { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <!-- Boot splash -->
+  <div id="boot">
+    <div class="logo">🚛</div>
+    <div class="name">TruckLogis Thailand</div>
+    <div class="sub">Logistics Cost Calculator Platform</div>
+    <div class="bar"><div class="bar-fill"></div></div>
+  </div>
+
+  <div id="root"></div>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- Leaflet -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Mock data + calc engine + routing layer + export bridge -->
+  <script src="js/data.js"></script>
+  <script src="js/calc.js"></script>
+  <script src="js/routing.js"></script>
+  <script src="js/export-bridge.js"></script>
+
+  <!-- Components: each exports to window — order matters -->
+  <script type="text/babel" src="components/TruckMap.jsx"></script>
+  <script type="text/babel" src="components/WeatherWidget.jsx"></script>
+  <script type="text/babel" src="components/ResultsPanel.jsx"></script>
+  <script type="text/babel" src="components/CalculatorPage.jsx"></script>
+  <script type="text/babel" src="components/TruckProfilePage.jsx"></script>
+  <script type="text/babel" src="components/SecondaryPages.jsx"></script>
+  <script type="text/babel" src="components/TripLogPage.jsx"></script>
+  <script type="text/babel" src="components/DashboardPage.jsx"></script>
+  <script type="text/babel" src="components/ExportPage.jsx"></script>
+
+  <!-- Main app (mounts React root) -->
+  <script type="text/babel" src="app.jsx"></script>
+
+  <!-- Hide boot splash after app loads -->
+  <script>
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        var boot = document.getElementById('boot');
+        if (boot) {
+          boot.style.opacity = '0';
+          boot.style.pointerEvents = 'none';
+          setTimeout(function () { boot.remove(); }, 450);
+        }
+      }, 1800);
+    });
+  </script>
+</body>
+</html>

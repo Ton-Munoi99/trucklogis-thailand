@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Scenario Comparison — TruckLogis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="../js/export-bridge.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0D1B2A;--blue:#2563EB;--green:#059669;--amber:#D97706;--red:#DC2626;--border:#E2E8F0;--bg:#F8FAFC;--text:#0F172A;--sub:#475569;--muted:#94A3B8}
+body{font-family:'Sarabun',sans-serif;background:#DDE3EC;padding:24px}
+/* Landscape A4 = 297mm × 210mm */
+.page{width:297mm;min-height:210mm;background:white;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,.15);display:flex;flex-direction:column}
+.doc-header{background:var(--navy);color:white;padding:12px 22px;display:flex;align-items:center;justify-content:space-between}
+.doc-logo-row{display:flex;align-items:center;gap:10px}
+.doc-logo{width:32px;height:32px;border-radius:7px;background:rgba(37,99,235,.8);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.co-name{font-size:13px;font-weight:800}
+.co-sub{font-size:8.5px;color:#4E7090;text-transform:uppercase;letter-spacing:.8px}
+.doc-title{font-size:14px;font-weight:800}
+.doc-title-en{font-size:8.5px;color:#4E7090;text-transform:uppercase;letter-spacing:.8px;text-align:right}
+
+/* Route sub-header */
+.route-sub{background:#1E3A5F;color:white;padding:8px 22px;display:flex;gap:24px;align-items:center;font-size:11px}
+.rs-label{opacity:.6;font-size:9px;text-transform:uppercase;letter-spacing:.5px}
+.rs-val{font-weight:700}
+
+.body{padding:12px 22px;flex:1;display:flex;flex-direction:column;gap:12px}
+.sec-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:6px}
+
+/* Main comparison layout */
+.comp-layout{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+
+/* Comparison table */
+table.comp-table{width:100%;border-collapse:collapse;font-size:11px}
+table.comp-table th{background:var(--navy);color:white;padding:6px 8px;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;text-align:left}
+table.comp-table th.sc-col{text-align:center;min-width:70px}
+table.comp-table td{padding:6px 8px;border-bottom:1px solid #F1F5F9;color:var(--text);font-size:11px}
+table.comp-table td.sc-val{text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:10.5px}
+table.comp-table tr:nth-child(even) td{background:#FAFBFC}
+table.comp-table tr.highlight td{background:#EFF6FF}
+table.comp-table tr.highlight td.sc-val{font-weight:800;font-size:13px}
+table.comp-table tr.divider td{background:#F1F5F9;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:4px 8px}
+table.comp-table tr.winner td.sc-val.best{color:var(--green);font-weight:800}
+
+.sc-header{background:#1E3A5F;color:white}
+.sc-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+.best-badge{background:#ECFDF5;color:#059669;font-size:8px;font-weight:800;padding:1px 5px;border-radius:100px;margin-left:3px;border:1px solid #A7F3D0}
+
+/* Right panel */
+.right-panel{display:flex;flex-direction:column;gap:10px}
+.chart-box{border:1px solid var(--border);border-radius:8px;padding:10px;background:white}
+.chart-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:7px}
+.rec-box{background:linear-gradient(135deg,#1E3A5F,#2563EB);border-radius:8px;padding:12px 14px;color:white;flex:1}
+.rec-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;opacity:.8;margin-bottom:8px}
+.rec-item{display:flex;gap:8px;margin-bottom:7px;font-size:10.5px;line-height:1.3}
+.rec-icon{font-size:13px;flex-shrink:0}
+
+.doc-footer{background:#F8FAFC;border-top:1px solid var(--border);padding:6px 22px;display:flex;justify-content:space-between}
+.footer-note{font-size:8.5px;color:var(--muted)}
+
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{background:white;padding:0}.page{box-shadow:none;width:100%}.no-print{display:none!important}@page{size:A4 landscape;margin:0}}
+.toolbar{width:297mm;margin:0 auto 16px;display:flex;gap:8px;align-items:center}
+.toolbar button{padding:7px 16px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;font-family:'Sarabun',sans-serif}
+.btn-print{background:#0D1B2A;color:white}
+.btn-close{background:#F1F5F9;color:#475569}
+</style>
+</head>
+<body>
+<div class="toolbar no-print">
+  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ / Export PDF</button>
+  <button class="btn-close" onclick="window.close()">✕ ปิด</button>
+  <span style="font-size:11px;color:#94A3B8;margin-left:8px">ขนาด A4 Landscape · เปรียบเทียบ 3 ประเภทรถ</span>
+</div>
+<div class="page">
+  <div class="doc-header">
+    <div class="doc-logo-row">
+      <div class="doc-logo">📊</div>
+      <div><div class="co-name" id="coName">TruckLogis Thailand</div><div class="co-sub">Scenario Comparison Report</div></div>
+    </div>
+    <div>
+      <div class="doc-title">รายงานเปรียบเทียบ Scenario ต้นทุน</div>
+      <div class="doc-title-en">Multi-Vehicle Cost Scenario Comparison</div>
+    </div>
+  </div>
+
+  <div class="route-sub">
+    <div><div class="rs-label">เส้นทาง / Route</div><div class="rs-val" id="rsRoute">—</div></div>
+    <div><div class="rs-label">ประเภททริป / Trip Type</div><div class="rs-val">ไปบรรทุก / กลับรถเปล่า</div></div>
+    <div><div class="rs-label">ระยะทางรวม / Total</div><div class="rs-val" id="rsDist">890 กม.</div></div>
+    <div><div class="rs-label">วันที่ / Date</div><div class="rs-val" id="rsDate">—</div></div>
+    <div><div class="rs-label">ราคาน้ำมัน / Fuel</div><div class="rs-val">฿33.64/ลิตร</div></div>
+  </div>
+
+  <div class="body">
+    <div class="comp-layout">
+
+      <!-- Comparison table -->
+      <div>
+        <div class="sec-title">ตารางเปรียบเทียบต้นทุน / Cost Comparison Table</div>
+        <table class="comp-table" id="compTable"></table>
+      </div>
+
+      <!-- Right panel: chart + recommendation -->
+      <div class="right-panel">
+        <div class="chart-box">
+          <div class="chart-title">ต้นทุนรวมเปรียบเทียบ / Total Cost Comparison</div>
+          <canvas id="scChart" height="120"></canvas>
+        </div>
+        <div class="rec-box" id="recBox">
+          <div class="rec-title">💡 สรุปข้อเสนอแนะ / Recommendation</div>
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span class="footer-note">TruckLogis Thailand · <span id="footerDate"></span></span>
+    <span class="footer-note">เส้นทาง: ขอนแก่น → กรุงเทพมหานคร · ราคาน้ำมัน ดีเซล B7 ณ วันออกรายงาน</span>
+  </div>
+</div>
+
+<script>
+const fmtN=(n,d=2)=>n==null||isNaN(n)?'—':n.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtB=(n,d=0)=>n==null?'—':'฿'+fmtN(n,d);
+const SC_COLORS=['#2563EB','#059669','#DC2626'];
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const D = window.ExportBridge ? window.ExportBridge.load() : {};
+  const CalcEngine = window.CalcEngine;
+  const scenarios = window.AppData?.SCENARIOS || [];
+
+  document.getElementById('rsRoute').textContent=(D.originName||'ขอนแก่น')+' → '+(D.destName||'กรุงเทพมหานคร');
+  document.getElementById('rsDist').textContent=(D.totalDistance||890)+' กม.';
+  document.getElementById('rsDate').textContent=D.calcDate||new Date().toLocaleDateString('th-TH');
+  document.getElementById('footerDate').textContent='พิมพ์: '+new Date().toLocaleDateString('th-TH');
+
+  const scData = scenarios.length>0 ? scenarios : [
+    {label:'รถ 6 ล้อ',cargoWeight:5,loadedDistance:445,emptyDistance:445,loadedKmPerLiter:5.5,emptyKmPerLiter:7.5,fuelPrice:33.64,tollCost:360,driverDays:1,driverCostPerDay:600,helperDays:1,helperCostPerDay:450,maintenanceCostPerKm:1.50,tireCostPerKm:0.40,loadingCost:1200,permitCost:0,otherCost:200,freightRevenue:6000},
+    {label:'รถ 10 ล้อ',cargoWeight:12,loadedDistance:445,emptyDistance:445,loadedKmPerLiter:3.2,emptyKmPerLiter:4.5,fuelPrice:33.64,tollCost:560,driverDays:1,driverCostPerDay:700,helperDays:1,helperCostPerDay:500,maintenanceCostPerKm:2.00,tireCostPerKm:0.70,loadingCost:1800,permitCost:0,otherCost:300,freightRevenue:18000},
+    {label:'รถเทรลเลอร์',cargoWeight:22,loadedDistance:445,emptyDistance:445,loadedKmPerLiter:2.2,emptyKmPerLiter:3.5,fuelPrice:33.64,tollCost:680,driverDays:1,driverCostPerDay:1000,helperDays:1,helperCostPerDay:650,maintenanceCostPerKm:3.50,tireCostPerKm:1.50,loadingCost:3000,permitCost:800,otherCost:600,freightRevenue:20000},
+  ];
+
+  const calc = CalcEngine ? CalcEngine.calculateTripCost : (p=>({
+    fuelCost:(p.loadedDistance/p.loadedKmPerLiter+p.emptyDistance/p.emptyKmPerLiter)*p.fuelPrice,
+    tollCost:p.tollCost,driverCost:p.driverCostPerDay,helperCost:p.helperCostPerDay,
+    maintenanceCost:(p.loadedDistance+p.emptyDistance)*p.maintenanceCostPerKm,
+    tireCost:(p.loadedDistance+p.emptyDistance)*p.tireCostPerKm,
+    loadingCost:p.loadingCost,permitCost:p.permitCost||0,otherCost:p.otherCost||0,
+    totalDistance:p.loadedDistance+p.emptyDistance,cargoWeight:p.cargoWeight,freightRevenue:p.freightRevenue||0,
+    get totalCost(){return this.fuelCost+this.tollCost+this.driverCost+this.helperCost+this.maintenanceCost+this.tireCost+this.loadingCost+this.permitCost+this.otherCost},
+    get costPerKm(){return this.totalCost/this.totalDistance},
+    get costPerTonKm(){return this.totalCost/(this.cargoWeight*p.loadedDistance)},
+    get profit(){return this.freightRevenue-this.totalCost},
+  }));
+
+  const results = scData.map(s=>calc(s));
+  const bestCostIdx = results.reduce((b,r,i)=>r.totalCost<results[b].totalCost?i:b,0);
+  const bestTonKmIdx = results.reduce((b,r,i)=>r.costPerTonKm<results[b].costPerTonKm?i:b,0);
+
+  // Build table
+  const rows = [
+    {label:'ประเภทรถ / Truck Type',val:(s,r)=>s.label,isBold:false},
+    {label:'น้ำหนักสินค้า / Cargo Weight',val:(s,r)=>fmtN(s.cargoWeight||r.cargoWeight,1)+' ตัน'},
+    {label:'',divider:'เชื้อเพลิง / Fuel'},
+    {label:'อัตราสิ้นเปลือง ขาบรรทุก',val:(s,r)=>fmtN(s.loadedKmPerLiter||r.loadedKmPerLiter,1)+' กม./ล.'},
+    {label:'ค่าน้ำมัน / Fuel Cost',val:(s,r)=>fmtB(r.fuelCost)},
+    {label:'',divider:'ต้นทุน / Costs'},
+    {label:'ค่าทางด่วน / Toll',val:(s,r)=>fmtB(r.tollCost)},
+    {label:'ค่าแรงงาน / Labor',val:(s,r)=>fmtB(r.driverCost+r.helperCost)},
+    {label:'ซ่อมบำรุง+ยาง / Maint+Tires',val:(s,r)=>fmtB(r.maintenanceCost+r.tireCost)},
+    {label:'โหลดสินค้า / Loading',val:(s,r)=>fmtB(r.loadingCost)},
+    {label:'',divider:'ผลลัพธ์ / Results'},
+    {label:'▸ ต้นทุนรวม / Total Cost',val:(s,r)=>fmtB(r.totalCost),highlight:true,kpi:'totalCost'},
+    {label:'▸ ต้นทุน/กม. / Per km',val:(s,r)=>fmtB(r.costPerKm,2),highlight:true},
+    {label:'▸ ต้นทุน/ตัน-กม. / Per ton-km',val:(s,r)=>fmtN(r.costPerTonKm,2)+' ฿',highlight:true,kpi:'tonKm'},
+    {label:'ค่าขนส่ง / Freight Revenue',val:(s,r)=>s.freightRevenue?fmtB(s.freightRevenue):'—'},
+    {label:'▸ กำไร/ขาดทุน / P&L',val:(s,r)=>r.profit!=null?fmtB(r.profit):'—',highlight:true,kpi:'profit'},
+  ];
+
+  const table = document.getElementById('compTable');
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  headerRow.innerHTML=`<th style="width:38%">รายการ / Item</th>`+
+    scData.map((s,i)=>`<th class="sc-col"><div style="display:flex;align-items:center;justify-content:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${SC_COLORS[i]};flex-shrink:0"></span>${s.label}${i===bestCostIdx?'<span class="best-badge">ต้นทุนต่ำสุด</span>':''}</div></th>`).join('');
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  rows.forEach(row=>{
+    if(row.divider!==undefined){
+      if(!row.divider) return;
+      const tr=document.createElement('tr');tr.className='divider';
+      tr.innerHTML=`<td colspan="${scData.length+1}">${row.divider}</td>`;
+      tbody.appendChild(tr);return;
+    }
+    const tr=document.createElement('tr');
+    if(row.highlight) tr.className='highlight';
+    let cells=`<td style="font-weight:${row.highlight?700:400}">${row.label}</td>`;
+    scData.forEach((s,i)=>{
+      const val=row.val(s,results[i]);
+      let isBest=false;
+      if(row.kpi==='totalCost') isBest=i===bestCostIdx;
+      if(row.kpi==='tonKm')    isBest=i===bestTonKmIdx;
+      if(row.kpi==='profit')   isBest=results[i].profit===Math.max(...results.map(r=>r.profit||0));
+      let color='';
+      if(row.kpi==='profit') color=results[i].profit>0?'color:#059669':'color:#DC2626';
+      cells+=`<td class="sc-val${isBest?' best':''}" style="${color}">${val}</td>`;
+    });
+    tr.innerHTML=cells;tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  // Bar chart
+  new Chart(document.getElementById('scChart'),{
+    type:'bar',
+    data:{
+      labels:scData.map(s=>s.label),
+      datasets:[{
+        label:'ต้นทุนรวม (บาท)',
+        data:results.map(r=>r.totalCost),
+        backgroundColor:SC_COLORS,
+        borderRadius:5,
+      }],
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' ฿'+fmtN(ctx.raw,0)},bodyFont:{family:'Sarabun'}}},scales:{x:{grid:{display:false},ticks:{font:{family:'Sarabun',size:10}}},y:{grid:{color:'#F1F5F9'},ticks:{font:{family:'Sarabun',size:10},callback:v=>'฿'+fmtN(v/1000,0)+'K'}}}},
+  });
+
+  // Recommendation
+  const rec=document.getElementById('recBox');
+  rec.innerHTML=`<div class="rec-title">💡 สรุปข้อเสนอแนะ / Recommendation</div>
+    <div class="rec-item"><span class="rec-icon">🏆</span><span>รถ 10 ล้อ มีความสมดุลระหว่างต้นทุนรวมและความยืดหยุ่นด้านปริมาณบรรทุก เหมาะสำหรับเส้นทางนี้</span></div>
+    <div class="rec-item"><span class="rec-icon">📦</span><span>หากปริมาณสินค้า ≥ 18 ตัน ควรพิจารณา รถเทรลเลอร์ เนื่องจากต้นทุน/ตัน-กม. ต่ำที่สุด</span></div>
+    <div class="rec-item"><span class="rec-icon">⛽</span><span>ค่าน้ำมันคิดเป็น 55-60% ของต้นทุนทุกประเภทรถ — ให้ความสำคัญกับการเพิ่มประสิทธิภาพเชื้อเพลิง</span></div>`;
+
+  if(new URLSearchParams(location.search).get('print')==='1') setTimeout(()=>window.print(),900);
+});
+</script>
+</body>
+</html>

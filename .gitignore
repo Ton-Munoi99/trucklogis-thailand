@@ -1,0 +1,8 @@
+# .gitignore
+.env
+.env.local
+node_modules/
+.netlify/
+*.log
+.DS_Store
+Thumbs.db

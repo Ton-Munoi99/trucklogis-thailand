@@ -1,0 +1,16 @@
+{
+  "name": "trucklogis-thailand",
+  "version": "1.0.0",
+  "description": "Truck Logistics Cost Calculator — Internal Tool",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Static site — no build step needed'",
+    "deploy": "netlify deploy --prod"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

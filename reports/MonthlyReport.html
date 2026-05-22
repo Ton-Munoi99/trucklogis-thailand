@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fleet Monthly Report — TruckLogis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="../js/export-bridge.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0D1B2A;--blue:#2563EB;--green:#059669;--amber:#D97706;--red:#DC2626;--border:#E2E8F0;--bg:#F8FAFC;--text:#0F172A;--sub:#475569;--muted:#94A3B8}
+body{font-family:'Sarabun',sans-serif;background:#DDE3EC;padding:24px}
+.page{width:210mm;min-height:297mm;background:white;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,.15);display:flex;flex-direction:column}
+.doc-header{background:var(--navy);color:white;padding:14px 22px;display:flex;align-items:center;justify-content:space-between}
+.doc-logo-row{display:flex;align-items:center;gap:10px}
+.doc-logo{width:36px;height:36px;border-radius:8px;background:rgba(37,99,235,.8);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.co-name{font-size:14px;font-weight:800}
+.co-sub{font-size:9px;color:#4E7090;text-transform:uppercase;letter-spacing:.8px}
+.doc-title-block{text-align:right}
+.doc-title{font-size:15px;font-weight:800}
+.doc-title-en{font-size:9px;color:#4E7090;text-transform:uppercase;letter-spacing:.8px}
+
+/* Month banner */
+.month-banner{background:linear-gradient(135deg,#1E3A5F,#2563EB);color:white;padding:12px 22px;display:flex;justify-content:space-between;align-items:center}
+.month-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;opacity:.8}
+.month-val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:800}
+.month-meta{font-size:11px;opacity:.7}
+
+.body{padding:14px 22px;flex:1;display:flex;flex-direction:column;gap:12px}
+.sec-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:7px}
+
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kpi-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
+.kpi-icon{font-size:18px;margin-bottom:3px}
+.kpi-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px}
+.kpi-val{font-family:'IBM Plex Mono',monospace;font-weight:800;font-size:16px;line-height:1}
+.kpi-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.trend{font-size:9.5px;font-weight:700;margin-top:3px}
+
+/* Routes table */
+table.route-table{width:100%;border-collapse:collapse;font-size:11px}
+table.route-table th{background:var(--navy);color:white;padding:7px 8px;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left}
+table.route-table th:nth-child(n+3){text-align:right}
+table.route-table td{padding:7px 8px;border-bottom:1px solid #F1F5F9;color:var(--text)}
+table.route-table td:nth-child(n+3){text-align:right;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600}
+table.route-table tr:nth-child(even) td{background:#FAFBFC}
+table.route-table tr.total-row td{background:#EFF6FF;font-weight:700;border-top:2px solid var(--blue);color:var(--blue)}
+
+/* Two-col layout */
+.two-col{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}
+.chart-box{border:1px solid var(--border);border-radius:8px;padding:12px;background:white}
+.chart-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+
+/* Truck breakdown mini-table */
+table.truck-table{width:100%;border-collapse:collapse;font-size:11px}
+table.truck-table th{background:#F8FAFC;color:var(--muted);padding:5px 8px;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);text-align:left}
+table.truck-table th:nth-child(n+2){text-align:right}
+table.truck-table td{padding:6px 8px;border-bottom:1px solid #F1F5F9;font-size:10.5px}
+table.truck-table td:nth-child(n+2){text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:10px}
+
+.doc-footer{background:#F8FAFC;border-top:1px solid var(--border);padding:7px 22px;display:flex;justify-content:space-between}
+.footer-note{font-size:8.5px;color:var(--muted)}
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{background:white;padding:0}.page{box-shadow:none;width:100%}.no-print{display:none!important}@page{size:A4;margin:0}}
+.toolbar{width:210mm;margin:0 auto 16px;display:flex;gap:8px;align-items:center}
+.toolbar button{padding:7px 16px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;font-family:'Sarabun',sans-serif}
+.btn-print{background:#0D1B2A;color:white}
+.btn-close{background:#F1F5F9;color:#475569}
+</style>
+</head>
+<body>
+<div class="toolbar no-print">
+  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ / Export PDF</button>
+  <button class="btn-close" onclick="window.close()">✕ ปิด</button>
+  <span style="font-size:11px;color:#94A3B8;margin-left:8px">รายงานต้นทุนกองยานรายเดือน · A4 Portrait</span>
+</div>
+<div class="page">
+  <div class="doc-header">
+    <div class="doc-logo-row">
+      <div class="doc-logo">🚛</div>
+      <div><div class="co-name" id="coName">กองยานขนส่ง</div><div class="co-sub">Fleet Cost Report</div></div>
+    </div>
+    <div class="doc-title-block">
+      <div class="doc-title">รายงานต้นทุนกองยานรายเดือน</div>
+      <div class="doc-title-en">Fleet Monthly Cost Report</div>
+    </div>
+  </div>
+
+  <div class="month-banner">
+    <div><div class="month-label">รายงานประจำเดือน / Monthly Report</div><div class="month-val" id="monthLabel">พฤษภาคม 2569</div></div>
+    <div style="text-align:right"><div class="month-label">เลขที่รายงาน / Report No.</div><div class="month-meta" id="reportNo">TL-RPT-202605-001</div></div>
+  </div>
+
+  <div class="body">
+    <!-- KPIs -->
+    <div>
+      <div class="sec-title">สรุปภาพรวม / Fleet Overview — เดือนนี้</div>
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon">🚛</div>
+          <div class="kpi-label">เที่ยวรถทั้งหมด</div>
+          <div class="kpi-val" style="color:var(--navy)">127</div>
+          <div class="kpi-sub">ทริป / Trips</div>
+          <div class="trend" style="color:var(--green)">↑ +8 จากเดือนก่อน</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">📍</div>
+          <div class="kpi-label">ระยะทางรวม</div>
+          <div class="kpi-val" style="color:var(--blue)">56,230</div>
+          <div class="kpi-sub">กม. / km</div>
+          <div class="trend" style="color:var(--green)">↑ +3.2% MoM</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-label">ต้นทุนรวม</div>
+          <div class="kpi-val" style="color:var(--red)">1.81 ล.</div>
+          <div class="kpi-sub">บาท / THB</div>
+          <div class="trend" style="color:var(--red)">↑ +2.1% MoM</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">📏</div>
+          <div class="kpi-label">ต้นทุนเฉลี่ย/กม.</div>
+          <div class="kpi-val" style="color:var(--blue)">฿32.19</div>
+          <div class="kpi-sub">บาท/กม.</div>
+          <div class="trend" style="color:var(--amber)">— ทรงตัว</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Routes table -->
+    <div>
+      <div class="sec-title">ต้นทุนตามเส้นทาง / Cost by Route</div>
+      <table class="route-table">
+        <thead>
+          <tr>
+            <th style="width:28%">เส้นทาง / Route</th>
+            <th>ประเภทรถ</th>
+            <th>จำนวนเที่ยว</th>
+            <th>ต้นทุน/เที่ยว</th>
+            <th>ต้นทุนรวม</th>
+            <th>฿/กม.</th>
+          </tr>
+        </thead>
+        <tbody id="routeBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Chart + Truck breakdown -->
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="chart-title">สัดส่วนต้นทุกตามหมวด / Cost Category Split</div>
+        <canvas id="catChart" height="160"></canvas>
+      </div>
+      <div>
+        <div class="sec-title">ต้นทุนตามประเภทรถ / By Truck Type</div>
+        <table class="truck-table">
+          <thead>
+            <tr>
+              <th>ประเภทรถ</th>
+              <th>เที่ยว</th>
+              <th>฿/กม.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>รถ 6 ล้อ</td><td>38</td><td>24.80</td></tr>
+            <tr><td>รถ 10 ล้อ</td><td>52</td><td>32.15</td></tr>
+            <tr><td>รถ 12 ล้อ</td><td>22</td><td>38.40</td></tr>
+            <tr><td>รถเทรลเลอร์</td><td>15</td><td>44.70</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:7px;padding:9px 11px">
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#059669;margin-bottom:4px">💡 ข้อสังเกต</div>
+          <div style="font-size:10.5px;color:#065F46;line-height:1.4">รถ 10 ล้อมีสัดส่วนเที่ยวมากสุด · ค่าน้ำมันคิดเป็น 56% ของต้นทุนรวม · ค่าซ่อมบำรุงเพิ่มขึ้น 4% จากเดือนก่อน</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="doc-footer">
+    <span class="footer-note">TruckLogis Thailand · <span id="footerDate"></span></span>
+    <span class="footer-note">ข้อมูลอ้างอิงจากระบบ TruckLogis Cost Calculator · สำหรับใช้ภายในองค์กร</span>
+  </div>
+</div>
+
+<script>
+const fmtN=(n,d=0)=>n==null||isNaN(n)?'—':n.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtB=(n,d=0)=>'฿'+fmtN(n,d);
+const ROUTES = window.AppData ? window.AppData.SAVED_ROUTES : [];
+const TRIPS = [22,18,15,12,10,8];
+window.addEventListener('DOMContentLoaded',()=>{
+  const D = window.ExportBridge ? window.ExportBridge.load() : {};
+  if(D.companyName) document.getElementById('coName').textContent=D.companyName+' · กองยานขนส่ง';
+  document.getElementById('footerDate').textContent='พิมพ์: '+new Date().toLocaleDateString('th-TH');
+
+  const monthNames=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const now=new Date();
+  document.getElementById('monthLabel').textContent=monthNames[now.getMonth()]+' '+(now.getFullYear()+543);
+
+  // Route rows
+  const routes = ROUTES.length>0 ? ROUTES : [
+    {name:'ขอนแก่น → กรุงเทพ',truckType:'รถ 10 ล้อ',avgCost:14265},
+    {name:'นครหลวง → แหลมฉบัง',truckType:'รถเทรลเลอร์',avgCost:8420},
+    {name:'กรุงเทพ → เชียงใหม่',truckType:'รถ 10 ล้อ',avgCost:20840},
+    {name:'โคราช → ระยอง',truckType:'รถ 6 ล้อ',avgCost:7890},
+    {name:'ขอนแก่น → หนองคาย',truckType:'รถ 6 ล้อ',avgCost:6540},
+    {name:'โรงงาน → ขอนแก่น',truckType:'รถ 10 ล้อ',avgCost:12340},
+  ];
+
+  const tbody=document.getElementById('routeBody');
+  let grandTotal=0;
+  routes.forEach((r,i)=>{
+    const t=TRIPS[i]||10;
+    const total=r.avgCost*t;
+    grandTotal+=total;
+    const km=r.distance||445;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r.name||r.origin+' → '+r.destination}</td><td>${r.truckType}</td><td>${t} เที่ยว</td><td>${fmtB(r.avgCost)}</td><td>${fmtB(total)}</td><td>${fmtB(r.avgCost/(km||1),2)}</td>`;
+    tbody.appendChild(tr);
+  });
+  const tfoot=document.createElement('tr');
+  tfoot.className='total-row';
+  tfoot.innerHTML=`<td colspan="3">ต้นทุนรวม / Grand Total</td><td>—</td><td>${fmtB(grandTotal)}</td><td>—</td>`;
+  tbody.appendChild(tfoot);
+
+  // Category chart
+  const catLabels=['น้ำมัน','ทางด่วน','แรงงาน','ซ่อมบำรุง','ยาง','โหลดสินค้า','อื่นๆ'];
+  const catData=[56,8,14,10,5,5,2];
+  const catColors=['#2563EB','#F59E0B','#059669','#8B5CF6','#EC4899','#06B6D4','#94A3B8'];
+  new Chart(document.getElementById('catChart'),{
+    type:'bar',
+    data:{labels:catLabels,datasets:[{label:'สัดส่วน (%)',data:catData,backgroundColor:catColors,borderRadius:5}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}%`},bodyFont:{family:'Sarabun'}}},scales:{x:{max:70,ticks:{font:{family:'Sarabun',size:10},callback:v=>v+'%'},grid:{color:'#F1F5F9'}},y:{ticks:{font:{family:'Sarabun',size:10}},grid:{display:false}}}},
+  });
+
+  if(new URLSearchParams(location.search).get('print')==='1') setTimeout(()=>window.print(),900);
+});
+</script>
+</body>
+</html>

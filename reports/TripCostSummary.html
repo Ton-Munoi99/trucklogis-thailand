@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Trip Cost Summary — TruckLogis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="../js/export-bridge.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D1B2A;--blue:#2563EB;--green:#059669;--red:#DC2626;--amber:#D97706;
+  --border:#E2E8F0;--bg:#F8FAFC;--text:#0F172A;--sub:#475569;--muted:#94A3B8;
+}
+body{font-family:'Sarabun',sans-serif;background:#DDE3EC;padding:24px}
+.page{
+  width:210mm;min-height:297mm;background:white;margin:0 auto;
+  box-shadow:0 4px 40px rgba(0,0,0,.15);position:relative;
+  display:flex;flex-direction:column;
+}
+
+/* Header strip */
+.doc-header{
+  background:var(--navy);color:white;padding:14px 22px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.doc-header-left{display:flex;align-items:center;gap:12px}
+.doc-logo{width:38px;height:38px;border-radius:8px;background:rgba(37,99,235,.8);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.co-name{font-size:15px;font-weight:800;line-height:1.2}
+.co-sub{font-size:9px;color:#4E7090;text-transform:uppercase;letter-spacing:.8px;margin-top:1px}
+.doc-title-block{text-align:right}
+.doc-title{font-size:16px;font-weight:800;letter-spacing:-.2px}
+.doc-title-en{font-size:9px;color:#4E7090;text-transform:uppercase;letter-spacing:.8px}
+
+/* Meta row */
+.doc-meta{
+  background:#F0F4F8;border-bottom:1px solid var(--border);
+  padding:10px 22px;display:flex;gap:28px;align-items:center;flex-wrap:wrap;
+}
+.meta-item{display:flex;flex-direction:column;gap:1px}
+.meta-label{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.meta-value{font-size:12px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace}
+.meta-route{font-size:13px;font-weight:800;color:var(--navy)}
+
+/* Body */
+.body{padding:16px 22px;flex:1;display:flex;flex-direction:column;gap:14px}
+
+/* Overview 2-col */
+.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ov-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.ov-title{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);margin-bottom:8px}
+.ov-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F1F5F9;font-size:11.5px}
+.ov-row:last-child{border-bottom:none}
+.ov-key{color:var(--sub)}
+.ov-val{font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px}
+
+/* Cost table */
+.section-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:6px}
+table.cost-table{width:100%;border-collapse:collapse;font-size:11.5px}
+table.cost-table th{background:var(--navy);color:white;padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+table.cost-table th:last-child,table.cost-table th:nth-child(2){text-align:right}
+table.cost-table td{padding:6px 10px;border-bottom:1px solid #F1F5F9;color:var(--text)}
+table.cost-table td:nth-child(2){text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px}
+table.cost-table tr:nth-child(even) td{background:#FAFBFC}
+table.cost-table tr.total-row td{background:#EFF6FF;font-weight:800;color:var(--blue);border-top:2px solid var(--blue)}
+table.cost-table tr.total-row td:nth-child(2){font-size:14px}
+
+/* Bar in table */
+.bar-wrap{display:flex;align-items:center;gap:6px}
+.bar-bg{flex:1;height:5px;background:#F1F5F9;border-radius:3px;overflow:hidden;min-width:60px}
+.bar-fill{height:100%;border-radius:3px}
+.bar-pct{font-size:9.5px;color:var(--muted);min-width:32px;text-align:right}
+
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kpi-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center}
+.kpi-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px}
+.kpi-val{font-family:'IBM Plex Mono',monospace;font-weight:800;font-size:15px;line-height:1.1}
+.kpi-sub{font-size:9px;color:var(--muted);margin-top:2px}
+
+/* Charts row */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chart-box{border:1px solid var(--border);border-radius:8px;padding:12px;background:white}
+.chart-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+
+/* Signatures */
+.sig-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:auto;padding-top:10px;border-top:1px solid var(--border)}
+.sig-box{display:flex;flex-direction:column;align-items:center;gap:4px}
+.sig-line{width:100%;height:1px;background:#CBD5E1;margin-bottom:4px}
+.sig-label{font-size:9px;color:var(--muted);text-align:center}
+.sig-name{font-size:10px;font-weight:700;color:var(--text)}
+
+/* Footer bar */
+.doc-footer{background:#F8FAFC;border-top:1px solid var(--border);padding:7px 22px;display:flex;justify-content:space-between;align-items:center}
+.footer-note{font-size:8.5px;color:var(--muted)}
+
+/* Print */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:white;padding:0}
+  .page{box-shadow:none;width:100%}
+  .no-print{display:none!important}
+  @page{size:A4;margin:0}
+}
+
+/* Screen toolbar */
+.toolbar{width:210mm;margin:0 auto 16px;display:flex;gap:8px;align-items:center}
+.toolbar button{padding:7px 16px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;font-family:'Sarabun',sans-serif}
+.btn-print{background:#0D1B2A;color:white}
+.btn-close{background:#F1F5F9;color:#475569}
+
+/* Color dots */
+.dot{width:9px;height:9px;border-radius:2px;display:inline-block;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ / Export PDF</button>
+  <button class="btn-close" onclick="window.close()">✕ ปิด</button>
+  <span style="font-size:11px;color:#94A3B8;margin-left:8px">ขนาด A4 Portrait · ใช้ Chrome Print → Save as PDF</span>
+</div>
+
+<div class="page" id="page">
+
+  <!-- ── Header ── -->
+  <div class="doc-header">
+    <div class="doc-header-left">
+      <div class="doc-logo">🚛</div>
+      <div>
+        <div class="co-name" id="coName">บริษัท ขนส่ง &nbsp;(โปรดระบุชื่อบริษัท)</div>
+        <div class="co-sub" id="coAddr">Logistics Company · Thailand</div>
+      </div>
+    </div>
+    <div class="doc-title-block">
+      <div class="doc-title">ใบสรุปต้นทุนเที่ยวรถ</div>
+      <div class="doc-title-en">Trip Cost Summary Report</div>
+    </div>
+  </div>
+
+  <!-- ── Meta row ── -->
+  <div class="doc-meta">
+    <div class="meta-item">
+      <span class="meta-label">เส้นทาง / Route</span>
+      <span class="meta-value meta-route" id="metaRoute">— → —</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">เลขที่เอกสาร / Doc No.</span>
+      <span class="meta-value" id="metaDocNo">TL-20260514-001</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">วันที่คำนวณ / Date</span>
+      <span class="meta-value" id="metaDate">14/05/2569</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">ประเภทรถ / Truck</span>
+      <span class="meta-value" id="metaTruck">—</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">ราคาน้ำมัน / Fuel Price</span>
+      <span class="meta-value" id="metaFuel">฿33.64/ลิตร</span>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- ── Overview 2-col ── -->
+    <div class="overview-grid">
+      <div class="ov-box">
+        <div class="ov-title">📍 ข้อมูลเส้นทาง / Route Info</div>
+        <div class="ov-row"><span class="ov-key">ต้นทาง / Origin</span><span class="ov-val" id="origin">—</span></div>
+        <div class="ov-row"><span class="ov-key">ปลายทาง / Destination</span><span class="ov-val" id="dest">—</span></div>
+        <div class="ov-row"><span class="ov-key">ระยะทางรวม / Total Distance</span><span class="ov-val" id="totalDist">—</span></div>
+        <div class="ov-row"><span class="ov-key">ขาบรรทุก / Loaded Leg</span><span class="ov-val" id="loadedDist">—</span></div>
+        <div class="ov-row"><span class="ov-key">ขากลับ/รถเปล่า / Empty Return</span><span class="ov-val" id="emptyDist">—</span></div>
+        <div class="ov-row"><span class="ov-key">เวลาเดินทาง / Travel Time</span><span class="ov-val" id="travelTime">—</span></div>
+      </div>
+      <div class="ov-box">
+        <div class="ov-title">🚛 รถและสินค้า / Truck &amp; Cargo</div>
+        <div class="ov-row"><span class="ov-key">ประเภทรถ / Truck Type</span><span class="ov-val" id="truckType">—</span></div>
+        <div class="ov-row"><span class="ov-key">ทะเบียน / Plate</span><span class="ov-val" id="plate">—</span></div>
+        <div class="ov-row"><span class="ov-key">ประเภทสินค้า / Cargo</span><span class="ov-val" id="cargoType">—</span></div>
+        <div class="ov-row"><span class="ov-key">น้ำหนักสินค้า / Weight</span><span class="ov-val" id="cargoWeight">—</span></div>
+        <div class="ov-row"><span class="ov-key">น้ำมันรวม / Total Fuel</span><span class="ov-val" id="totalFuel">—</span></div>
+        <div class="ov-row"><span class="ov-key">คนขับ / Driver</span><span class="ov-val" id="driverName">—</span></div>
+      </div>
+    </div>
+
+    <!-- ── Cost Breakdown Table ── -->
+    <div>
+      <div class="section-title">รายการต้นทุน / Cost Breakdown</div>
+      <table class="cost-table">
+        <thead>
+          <tr>
+            <th style="width:40%">รายการ / Item</th>
+            <th style="width:22%">จำนวนเงิน / Amount</th>
+            <th>สัดส่วน / Distribution</th>
+          </tr>
+        </thead>
+        <tbody id="costBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ── KPI row ── -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">ต้นทุนรวม / Total Cost</div>
+        <div class="kpi-val" id="kpiTotal" style="color:#DC2626">—</div>
+        <div class="kpi-sub">บาท / THB</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">ต้นทุน / กม. / Per km</div>
+        <div class="kpi-val" id="kpiKm" style="color:#2563EB">—</div>
+        <div class="kpi-sub">บาท/กิโลเมตร</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">ต้นทุน / ตัน-กม.</div>
+        <div class="kpi-val" id="kpiTonKm" style="color:#7C3AED">—</div>
+        <div class="kpi-sub">บาท/ตัน-กิโลเมตร</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">กำไร/ขาดทุน / P&amp;L</div>
+        <div class="kpi-val" id="kpiProfit" style="color:#059669">—</div>
+        <div class="kpi-sub" id="kpiProfitSub">ค่าขนส่ง: —</div>
+      </div>
+    </div>
+
+    <!-- ── Charts ── -->
+    <div class="charts-row">
+      <div class="chart-box">
+        <div class="chart-title">สัดส่วนต้นทุน / Cost Distribution</div>
+        <canvas id="pieChart" height="150"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">น้ำมัน ขาไป vs ขากลับ / Loaded vs Empty Fuel</div>
+        <canvas id="barChart" height="150"></canvas>
+      </div>
+    </div>
+
+    <!-- ── Signatures ── -->
+    <div class="sig-row">
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-label">จัดทำโดย / Prepared by</div>
+        <div class="sig-name" style="font-size:9px;color:var(--muted)">วันที่ / Date: .................</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-label">ตรวจสอบโดย / Verified by</div>
+        <div class="sig-name" style="font-size:9px;color:var(--muted)">วันที่ / Date: .................</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-label">อนุมัติโดย / Approved by</div>
+        <div class="sig-name" style="font-size:9px;color:var(--muted)">วันที่ / Date: .................</div>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- ── Footer ── -->
+  <div class="doc-footer">
+    <span class="footer-note">สร้างโดย TruckLogis Thailand Platform · <span id="footerDate"></span></span>
+    <span class="footer-note">ข้อมูลนี้จัดทำเพื่อใช้ภายในองค์กรเท่านั้น / For internal use only</span>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+const fmtN  = (n, d=2) => n == null || isNaN(n) ? '—' : n.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtB  = n => n == null ? '—' : '฿' + fmtN(n);
+const CATS  = ['น้ำมัน','ทางด่วน','คนขับ','ผู้ช่วย','ซ่อมบำรุง','ยาง','โหลดสินค้า','ใบอนุญาต','อื่นๆ'];
+const COLS  = ['#2563EB','#F59E0B','#059669','#10B981','#8B5CF6','#EC4899','#06B6D4','#94A3B8','#CBD5E1'];
+
+window.addEventListener('DOMContentLoaded', () => {
+  const D = window.ExportBridge ? window.ExportBridge.load() : {};
+
+  // Company
+  if (D.companyName) document.getElementById('coName').textContent = D.companyName;
+  if (D.companyAddress) document.getElementById('coAddr').textContent = D.companyAddress;
+
+  // Meta
+  const route = (D.originName||'—') + ' → ' + (D.destName||'—');
+  document.getElementById('metaRoute').textContent  = route;
+  document.getElementById('metaDocNo').textContent  = D.docNumber  || '—';
+  document.getElementById('metaDate').textContent   = D.calcDate   || '—';
+  document.getElementById('metaTruck').textContent  = D.truckType  || '—';
+  document.getElementById('metaFuel').textContent   = '฿' + fmtN(D.fuelPrice) + '/ลิตร';
+
+  // Overview
+  document.getElementById('origin').textContent      = D.originName   || '—';
+  document.getElementById('dest').textContent        = D.destName     || '—';
+  document.getElementById('totalDist').textContent   = fmtN(D.totalDistance,0)  + ' กม.';
+  document.getElementById('loadedDist').textContent  = fmtN(D.loadedDistance,0) + ' กม.';
+  document.getElementById('emptyDist').textContent   = fmtN(D.emptyDistance,0)  + ' กม.';
+  document.getElementById('travelTime').textContent  = D.travelTime  || '—';
+  document.getElementById('truckType').textContent   = D.truckType   || '—';
+  document.getElementById('plate').textContent       = D.truckPlate  || '—';
+  document.getElementById('cargoType').textContent   = D.cargoType   || '—';
+  document.getElementById('cargoWeight').textContent = fmtN(D.cargoWeight,1) + ' ตัน';
+  document.getElementById('totalFuel').textContent   = fmtN(D.totalFuelUsed) + ' ลิตร';
+  document.getElementById('driverName').textContent  = D.driverName  || '—';
+
+  // Cost rows
+  const items = [
+    ['ค่าน้ำมัน (ขาบรรทุก) / Loaded Fuel',  D.fuelCostLoaded,  COLS[0]],
+    ['ค่าน้ำมัน (ขากลับ) / Empty Return Fuel', D.fuelCostEmpty, COLS[0]],
+    ['ค่าทางด่วน / Toll',                    D.tollCost,       COLS[1]],
+    ['ค่าแรงคนขับ / Driver Cost',             D.driverCost,     COLS[2]],
+    ['ค่าแรงผู้ช่วย / Helper Cost',           D.helperCost,     COLS[3]],
+    ['ค่าซ่อมบำรุง / Maintenance',           D.maintenanceCost,COLS[4]],
+    ['ค่ายาง / Tire Cost',                   D.tireCost,       COLS[5]],
+    ['ค่าโหลด/ขนถ่ายสินค้า / Loading',      D.loadingCost,    COLS[6]],
+    ['ค่าใบอนุญาต/เอกสาร / Permit',          D.permitCost,     COLS[7]],
+    ['ค่าใช้จ่ายอื่นๆ / Other',             D.otherCost,      COLS[8]],
+  ];
+  const total = D.totalCost || 1;
+  const tbody = document.getElementById('costBody');
+  items.forEach(([label,val,col]) => {
+    if (!val || val <= 0) return;
+    const pct = (val / total * 100);
+    const tr  = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="dot" style="background:${col};margin-right:6px"></span>${label}</td>
+      <td>${fmtB(val)}</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${col}"></div></div>
+          <span class="bar-pct">${fmtN(pct,1)}%</span>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  const tfoot = document.createElement('tr');
+  tfoot.className = 'total-row';
+  tfoot.innerHTML = `<td>ต้นทุนรวมทั้งหมด / Grand Total</td><td>${fmtB(D.totalCost)}</td><td></td>`;
+  tbody.appendChild(tfoot);
+
+  // KPIs
+  document.getElementById('kpiTotal').textContent   = fmtB(D.totalCost);
+  document.getElementById('kpiKm').textContent      = fmtB(D.costPerKm);
+  document.getElementById('kpiTonKm').textContent   = fmtN(D.costPerTonKm);
+  const profitEl = document.getElementById('kpiProfit');
+  if (D.profit != null) {
+    profitEl.textContent = fmtB(D.profit);
+    profitEl.style.color = D.profit >= 0 ? '#059669' : '#DC2626';
+    document.getElementById('kpiProfitSub').textContent = 'ค่าขนส่ง: ' + fmtB(D.freightRevenue);
+  } else {
+    profitEl.textContent = '—';
+    document.getElementById('kpiProfitSub').textContent = 'ไม่ได้ระบุค่าขนส่ง';
+  }
+
+  // Footer
+  document.getElementById('footerDate').textContent = 'พิมพ์: ' + new Date().toLocaleDateString('th-TH');
+
+  // Pie chart
+  const pieData = [D.fuelCost, D.tollCost, D.driverCost + D.helperCost, D.maintenanceCost, D.tireCost, D.loadingCost, (D.permitCost||0)+(D.otherCost||0)].filter(v=>v>0);
+  const pieLabels = ['น้ำมัน','ทางด่วน','คนขับ+ผู้ช่วย','ซ่อมบำรุง','ยาง','โหลดสินค้า','อื่นๆ'].filter((_,i)=>[D.fuelCost,D.tollCost,D.driverCost+D.helperCost,D.maintenanceCost,D.tireCost,D.loadingCost,(D.permitCost||0)+(D.otherCost||0)][i]>0);
+  new Chart(document.getElementById('pieChart'), {
+    type:'doughnut',
+    data:{labels:pieLabels,datasets:[{data:pieData,backgroundColor:COLS.slice(0,pieData.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right',labels:{font:{family:'Sarabun',size:10},usePointStyle:true,padding:7}},tooltip:{callbacks:{label:ctx=>' ฿'+ctx.raw.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0})},bodyFont:{family:'Sarabun'}}}},
+  });
+
+  // Bar chart
+  new Chart(document.getElementById('barChart'), {
+    type:'bar',
+    data:{
+      labels:['น้ำมัน (ลิตร)','ค่าน้ำมัน (บาท÷100)'],
+      datasets:[
+        {label:'ขาบรรทุก',data:[D.loadedFuelUsed,D.fuelCostLoaded/100],backgroundColor:'#2563EB',borderRadius:4},
+        {label:'ขากลับ/เปล่า',data:[D.emptyFuelUsed,D.fuelCostEmpty/100],backgroundColor:'#94A3B8',borderRadius:4},
+      ],
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'Sarabun',size:10},usePointStyle:true}},tooltip:{bodyFont:{family:'Sarabun'}}},scales:{x:{grid:{display:false},ticks:{font:{family:'Sarabun',size:10}}},y:{grid:{color:'#F1F5F9'},ticks:{font:{family:'Sarabun',size:10}}}}},
+  });
+
+  // Auto-print if ?print=1
+  if(new URLSearchParams(location.search).get('print')==='1') setTimeout(()=>window.print(),900);
+});
+</script>
+</body>
+</html>

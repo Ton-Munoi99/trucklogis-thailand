@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Driver Briefing Sheet — TruckLogis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<script src="../js/export-bridge.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D1B2A;--blue:#2563EB;--green:#059669;--amber:#D97706;--red:#DC2626;
+  --border:#E2E8F0;--bg:#F8FAFC;--text:#0F172A;--sub:#475569;--muted:#94A3B8;
+}
+body{font-family:'Sarabun',sans-serif;background:#DDE3EC;padding:24px}
+.page{width:210mm;min-height:297mm;background:white;margin:0 auto;box-shadow:0 4px 40px rgba(0,0,0,.15);display:flex;flex-direction:column}
+.doc-header{background:var(--navy);color:white;padding:14px 22px;display:flex;align-items:center;justify-content:space-between}
+.doc-logo{width:36px;height:36px;border-radius:8px;background:rgba(37,99,235,.8);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.co-block{display:flex;align-items:center;gap:10px}
+.co-name{font-size:14px;font-weight:800;line-height:1.2}
+.co-sub{font-size:9px;color:#4E7090;text-transform:uppercase;letter-spacing:.8px;margin-top:1px}
+.doc-title{font-size:16px;font-weight:800}
+.doc-title-en{font-size:9px;color:#4E7090;text-transform:uppercase;letter-spacing:.8px;text-align:right}
+
+/* Route banner */
+.route-banner{background:linear-gradient(135deg,#1E3A5F 0%,#2563EB 100%);color:white;padding:18px 22px;display:flex;align-items:center;justify-content:space-between}
+.point{display:flex;flex-direction:column;gap:2px;max-width:38%}
+.point-type{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;opacity:.7}
+.point-name{font-size:18px;font-weight:800;line-height:1.2}
+.point-sub{font-size:10px;opacity:.7}
+.arrow-block{display:flex;flex-direction:column;align-items:center;gap:4px}
+.arrow-dist{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:800}
+.arrow-line{display:flex;align-items:center;gap:4px;font-size:13px;opacity:.8}
+.arrow-label{font-size:10px;opacity:.6}
+
+body{font-family:'Sarabun',sans-serif}
+.body{padding:16px 22px;flex:1;display:flex;flex-direction:column;gap:12px}
+
+/* Section title */
+.sec-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px}
+
+/* Info grid */
+.info-grid{display:grid;gap:8px}
+.ig-2{grid-template-columns:1fr 1fr}
+.ig-3{grid-template-columns:1fr 1fr 1fr}
+.info-box{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 12px}
+.info-label{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px}
+.info-value{font-size:13px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;line-height:1.2}
+.info-sub{font-size:9.5px;color:var(--sub);margin-top:2px}
+
+/* Fuel authorization box */
+.fuel-auth{background:linear-gradient(135deg,#FFF7ED 0%,#FFFBEB 100%);border:2px solid #FCD34D;border-radius:10px;padding:14px 18px}
+.fuel-auth-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#92400E;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.fuel-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.fuel-item{text-align:center}
+.fuel-label{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#B45309;margin-bottom:3px}
+.fuel-val{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:800;color:#92400E;line-height:1.1}
+.fuel-unit{font-size:9px;color:#B45309}
+
+/* Checkpoints */
+.checkpoint-list{display:flex;flex-direction:column;gap:0}
+.checkpoint{display:flex;align-items:stretch;gap:0}
+.cp-line{display:flex;flex-direction:column;align-items:center;width:24px;flex-shrink:0}
+.cp-dot{width:14px;height:14px;border-radius:50%;border:2.5px solid var(--blue);background:white;flex-shrink:0;z-index:1;margin-top:4px}
+.cp-dot.start{background:var(--green);border-color:var(--green)}
+.cp-dot.end{background:var(--red);border-color:var(--red)}
+.cp-vert{flex:1;width:2px;background:#E2E8F0;margin:0 auto}
+.cp-content{flex:1;padding:4px 10px 10px;font-size:11.5px;color:var(--text)}
+.cp-name{font-weight:700}
+.cp-detail{font-size:10px;color:var(--muted)}
+
+/* Notes */
+.notes-box{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 14px}
+.notes-title{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#DC2626;margin-bottom:6px}
+.note-item{font-size:11px;color:#7F1D1D;padding:2px 0;display:flex;gap:6px}
+.note-item::before{content:'•';color:#DC2626}
+
+/* Contacts */
+.contact-row{display:flex;gap:10px}
+.contact-box{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px 12px;display:flex;align-items:center;gap:8px}
+.contact-icon{font-size:16px}
+.contact-name{font-size:10px;font-weight:700;color:var(--text)}
+.contact-phone{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--blue)}
+
+/* Signature */
+.sig-section{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:auto;padding-top:10px;border-top:1px solid var(--border)}
+.sig-box{display:flex;flex-direction:column;gap:3px}
+.sig-line{width:100%;height:1px;background:#CBD5E1;margin:8px 0 3px}
+.sig-label{font-size:9px;color:var(--muted)}
+
+/* Footer */
+.doc-footer{background:#F8FAFC;border-top:1px solid var(--border);padding:7px 22px;display:flex;justify-content:space-between}
+.footer-note{font-size:8.5px;color:var(--muted)}
+
+/* Print */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:white;padding:0}
+  .page{box-shadow:none;width:100%}
+  .no-print{display:none!important}
+  @page{size:A4;margin:0}
+}
+.toolbar{width:210mm;margin:0 auto 16px;display:flex;gap:8px;align-items:center}
+.toolbar button{padding:7px 16px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;font-family:'Sarabun',sans-serif}
+.btn-print{background:#0D1B2A;color:white}
+.btn-close{background:#F1F5F9;color:#475569}
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ / Export PDF</button>
+  <button class="btn-close" onclick="window.close()">✕ ปิด</button>
+  <span style="font-size:11px;color:#94A3B8;margin-left:8px">ขนาด A4 Portrait · มอบให้คนขับก่อนออกเดินทาง</span>
+</div>
+
+<div class="page">
+  <!-- Header -->
+  <div class="doc-header">
+    <div class="co-block">
+      <div class="doc-logo">🚛</div>
+      <div>
+        <div class="co-name" id="coName">บริษัท ขนส่ง</div>
+        <div class="co-sub">ใบสั่งงานพนักงานขับรถ</div>
+      </div>
+    </div>
+    <div>
+      <div class="doc-title">Driver Briefing Sheet</div>
+      <div class="doc-title-en">ใบสรุปข้อมูลสำหรับคนขับรถ</div>
+    </div>
+  </div>
+
+  <!-- Route banner -->
+  <div class="route-banner">
+    <div class="point">
+      <span class="point-type">ต้นทาง / Origin</span>
+      <span class="point-name" id="bOrigin">ขอนแก่น</span>
+      <span class="point-sub">ออกจากคลังสินค้า</span>
+    </div>
+    <div class="arrow-block">
+      <span class="arrow-dist" id="bDist">445 กม.</span>
+      <div class="arrow-line">——→</div>
+      <span class="arrow-label" id="bTime">6 ชั่วโมง 30 นาที</span>
+    </div>
+    <div class="point" style="text-align:right">
+      <span class="point-type">ปลายทาง / Destination</span>
+      <span class="point-name" id="bDest">กรุงเทพมหานคร</span>
+      <span class="point-sub">ส่งสินค้าที่คลังปลายทาง</span>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Trip meta -->
+    <div>
+      <div class="sec-title">ข้อมูลทริป / Trip Information</div>
+      <div class="info-grid ig-3">
+        <div class="info-box">
+          <div class="info-label">เลขที่ใบงาน / Job No.</div>
+          <div class="info-value" id="jobNo">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">วันที่ออกเดินทาง / Depart Date</div>
+          <div class="info-value" id="departDate">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">ทะเบียนรถ / Truck Plate</div>
+          <div class="info-value" id="plate">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">ประเภทรถ / Truck Type</div>
+          <div class="info-value" id="truckType">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">คนขับ / Driver</div>
+          <div class="info-value" id="driver">—</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">ประเภทสินค้า / Cargo Type</div>
+          <div class="info-value" id="cargo">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fuel authorization -->
+    <div class="fuel-auth">
+      <div class="fuel-auth-title">⛽ การอนุมัติน้ำมัน / Fuel Authorization</div>
+      <div class="fuel-grid">
+        <div class="fuel-item">
+          <div class="fuel-label">น้ำมันอนุมัติรวม</div>
+          <div class="fuel-val" id="authFuel">—</div>
+          <div class="fuel-unit">ลิตร / Liters</div>
+        </div>
+        <div class="fuel-item">
+          <div class="fuel-label">ราคาน้ำมัน</div>
+          <div class="fuel-val" id="fuelPrice">—</div>
+          <div class="fuel-unit">บาท/ลิตร</div>
+        </div>
+        <div class="fuel-item">
+          <div class="fuel-label">ค่าน้ำมันรวม</div>
+          <div class="fuel-val" id="fuelCost">—</div>
+          <div class="fuel-unit">บาท / THB</div>
+        </div>
+        <div class="fuel-item">
+          <div class="fuel-label">ประเภทน้ำมัน</div>
+          <div class="fuel-val" style="font-size:13px" id="fuelType">ดีเซล B7</div>
+          <div class="fuel-unit">เติมได้ทุกปั๊ม</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cargo info -->
+    <div>
+      <div class="sec-title">ข้อมูลสินค้า / Cargo Details</div>
+      <div class="info-grid ig-3">
+        <div class="info-box">
+          <div class="info-label">น้ำหนักบรรทุก / Cargo Weight</div>
+          <div class="info-value" id="cargoWeight">—</div>
+          <div class="info-sub">ตัน / Tons</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">ค่าทางด่วน / Toll Budget</div>
+          <div class="info-value" id="tollBudget">—</div>
+          <div class="info-sub">บาท / THB</div>
+        </div>
+        <div class="info-box">
+          <div class="info-label">ต้นทุนเที่ยวนี้ / Trip Cost</div>
+          <div class="info-value" id="tripCost" style="color:#2563EB">—</div>
+          <div class="info-sub">บาท / THB</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checkpoints -->
+    <div>
+      <div class="sec-title">จุดแวะพัก / Route Checkpoints</div>
+      <div class="checkpoint-list">
+        <div class="checkpoint">
+          <div class="cp-line"><div class="cp-dot start"></div><div class="cp-vert"></div></div>
+          <div class="cp-content"><span class="cp-name" id="cp0">จุดเริ่มต้น</span><br><span class="cp-detail">ออกจากคลัง · ตรวจสอบสินค้าและรถก่อนออกเดินทาง</span></div>
+        </div>
+        <div class="checkpoint">
+          <div class="cp-line"><div class="cp-dot"></div><div class="cp-vert"></div></div>
+          <div class="cp-content"><span class="cp-name">จุดพักกลางทาง</span><br><span class="cp-detail">แวะพักไม่เกิน 30 นาที · เติมน้ำมันถ้าจำเป็น</span></div>
+        </div>
+        <div class="checkpoint">
+          <div class="cp-line"><div class="cp-dot"></div><div class="cp-vert"></div></div>
+          <div class="cp-content"><span class="cp-name">ด่านชั่งน้ำหนัก</span><br><span class="cp-detail">เตรียมเอกสารน้ำหนักรถและใบกำกับสินค้า</span></div>
+        </div>
+        <div class="checkpoint">
+          <div class="cp-line"><div class="cp-dot end"></div></div>
+          <div class="cp-content"><span class="cp-name" id="cp3">จุดส่งสินค้า</span><br><span class="cp-detail">แจ้งผู้รับสินค้า · รับใบส่งสินค้า (DO) คืน</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Important notes -->
+    <div class="notes-box">
+      <div class="notes-title">⚠️ ข้อควรระวัง / Important Notes</div>
+      <div class="note-item">ปฏิบัติตามกฎจราจรอย่างเคร่งครัด · ห้ามขับรถเกิน 90 กม./ชม.</div>
+      <div class="note-item">พักทุก 4 ชั่วโมง ห้ามขับต่อเนื่องเกิน 4 ชั่วโมงโดยไม่หยุดพัก</div>
+      <div class="note-item">ห้ามโหลดสินค้าเกินน้ำหนักที่กำหนด · ตรวจสอบใบกำกับน้ำหนัก</div>
+      <div class="note-item">เก็บใบเสร็จทางด่วนและน้ำมันทุกใบ ส่งคืนบริษัทหลังถึงปลายทาง</div>
+    </div>
+
+    <!-- Contacts -->
+    <div>
+      <div class="sec-title">ติดต่อฉุกเฉิน / Emergency Contacts</div>
+      <div class="contact-row">
+        <div class="contact-box"><span class="contact-icon">👤</span><div><div class="contact-name">ผู้ควบคุมยานพาหนะ / Fleet Control</div><div class="contact-phone">02-XXX-XXXX</div></div></div>
+        <div class="contact-box"><span class="contact-icon">🚑</span><div><div class="contact-name">ฉุกเฉิน / Emergency</div><div class="contact-phone">1669</div></div></div>
+        <div class="contact-box"><span class="contact-icon">🚔</span><div><div class="contact-name">ตำรวจทางหลวง / Highway Police</div><div class="contact-phone">1193</div></div></div>
+      </div>
+    </div>
+
+    <!-- Signature -->
+    <div class="sig-section">
+      <div class="sig-box">
+        <div style="font-size:10px;font-weight:700;color:var(--text)">คนขับรถรับทราบ / Driver Acknowledgment</div>
+        <div class="sig-line"></div>
+        <div class="sig-label">ลายเซ็น / Signature &nbsp;&nbsp;&nbsp; วันที่ / Date: .................</div>
+      </div>
+      <div class="sig-box">
+        <div style="font-size:10px;font-weight:700;color:var(--text)">ผู้อนุมัติ / Authorized by</div>
+        <div class="sig-line"></div>
+        <div class="sig-label">ลายเซ็น / Signature &nbsp;&nbsp;&nbsp; วันที่ / Date: .................</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="doc-footer">
+    <span class="footer-note">TruckLogis Thailand · <span id="footerDate"></span></span>
+    <span class="footer-note">มอบเอกสารนี้แก่คนขับก่อนออกเดินทาง / Hand this document to driver before departure</span>
+  </div>
+</div>
+
+<script>
+const fmtN = (n,d=0) => n==null||isNaN(n)?'—':n.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtB = n => n==null?'—':'฿'+fmtN(n,2);
+window.addEventListener('DOMContentLoaded',()=>{
+  const D = window.ExportBridge ? window.ExportBridge.load() : {};
+  if(D.companyName) document.getElementById('coName').textContent = D.companyName;
+  document.getElementById('bOrigin').textContent  = D.originName   || '—';
+  document.getElementById('bDest').textContent    = D.destName     || '—';
+  document.getElementById('bDist').textContent    = fmtN(D.loadedDistance,0) + ' กม.';
+  document.getElementById('bTime').textContent    = D.travelTime   || '—';
+  document.getElementById('jobNo').textContent    = D.docNumber    || '—';
+  document.getElementById('departDate').textContent = D.calcDate   || '—';
+  document.getElementById('plate').textContent    = D.truckPlate   || '—';
+  document.getElementById('truckType').textContent= D.truckType    || '—';
+  document.getElementById('driver').textContent   = D.driverName   || '—';
+  document.getElementById('cargo').textContent    = D.cargoType    || '—';
+  document.getElementById('authFuel').textContent = fmtN(D.totalFuelUsed,1);
+  document.getElementById('fuelPrice').textContent= fmtN(D.fuelPrice,2);
+  document.getElementById('fuelCost').textContent = fmtN(D.fuelCost,0);
+  document.getElementById('fuelType').textContent = D.fuelType     || 'ดีเซล B7';
+  document.getElementById('cargoWeight').textContent = fmtN(D.cargoWeight,1);
+  document.getElementById('tollBudget').textContent  = fmtN(D.tollCost,0);
+  document.getElementById('tripCost').textContent    = fmtN(D.totalCost,0);
+  document.getElementById('cp0').textContent  = D.originName || 'จุดเริ่มต้น';
+  document.getElementById('cp3').textContent  = D.destName   || 'จุดส่งสินค้า';
+  document.getElementById('footerDate').textContent = 'พิมพ์: ' + new Date().toLocaleDateString('th-TH');
+  if(new URLSearchParams(location.search).get('print')==='1') setTimeout(()=>window.print(),700);
+});
+</script>
+</body>
+</html>
