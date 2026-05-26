@@ -517,6 +517,7 @@ const CalculatorPage = ({ truckProfiles, onResult, selectedTruckId, onTruckChang
           destination={dest}
           onOriginSelect={setOrigin}
           onDestSelect={setDest}
+          osrmGeometry={routeInfo?.geometry}
         />
       </div>
     </div>

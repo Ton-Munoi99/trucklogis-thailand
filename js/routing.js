@@ -192,13 +192,10 @@ window.Routing = (function () {
     }
   }
 
-  // ── HERE Truck Routing (free tier, 250K/month) ────────────────────────────
-  // Requires API key from https://developer.here.com
-  // Set key in ApiSettings → stored in localStorage key 'tl_here_key'
+  // ── HERE Truck Routing via Netlify proxy ──────────────────────────────────
+  // The HERE key stays server-side in Netlify env var HERE_API_KEY.
   async function getRouteTruckHERE(originCoords, destCoords, truckParams = {}) {
-    const apiKey = 'zvWjE4HMHV4HFpdRo5-5e-ITncL69N0bBR-f_EPkgZk';
-    if (!apiKey) {
-      console.info('[Routing] HERE API key not set — falling back to OSRM');
+    if (!originCoords || !destCoords) {
       return null;
     }
 
@@ -206,38 +203,34 @@ window.Routing = (function () {
     const [oLat, oLng] = originCoords;
     const [dLat, dLng] = destCoords;
 
-    const params = new URLSearchParams({
-      apiKey,
-      origin:      `${oLat},${oLng}`,
-      destination: `${dLat},${dLng}`,
-      transportMode: 'truck',
-      'vehicle[grossWeight]':   grossWeight,
-      'vehicle[height]':        height,
-      'vehicle[width]':         width,
-      'vehicle[length]':        length,
-      'vehicle[axleCount]':     axleCount,
-      return: 'summary,polyline',
-    });
-
     try {
-      const res = await fetch('https://router.hereapi.com/v8/routes?' + params);
+      const res = await fetch('/api/here-route', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originLat: oLat,
+          originLng: oLng,
+          destLat: dLat,
+          destLng: dLng,
+          grossWeight,
+          height,
+          width,
+          length,
+          axleCount,
+        }),
+      });
       if (!res.ok) throw new Error('HERE HTTP ' + res.status);
       const data = await res.json();
-      const route = data.routes?.[0]?.sections?.[0]?.summary;
-      if (!route) throw new Error('HERE no route');
-
-      const dist = route.length / 1000;
-      const dur  = route.duration / 60;
-      const h = Math.floor(dur / 60), m = Math.round(dur % 60);
+      if (!data.distance_km) throw new Error(data.error || 'HERE no route');
 
       return {
-        distance_km:  Math.round(dist),
-        duration_min: Math.round(dur),
-        timeText:     `${h}h ${m}m`,
+        distance_km:  data.distance_km,
+        duration_min: data.duration_min,
+        timeText:     data.timeText,
         source:       'here_truck',
       };
     } catch (err) {
-      console.warn('[Routing] HERE Truck Routing failed:', err.message, '— falling back to OSRM');
+      console.warn('[Routing] HERE proxy failed:', err.message, '— falling back to OSRM');
       return null;
     }
   }

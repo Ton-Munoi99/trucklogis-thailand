@@ -8,6 +8,16 @@ const POI_CONFIG = {
   truck_stop: { color: '#2563EB', emoji: '🚛', label: 'ที่จอดรถบรรทุก' },
 };
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[ch]));
+}
+
 function makePOIIcon(type) {
   const cfg = POI_CONFIG[type] || POI_CONFIG.rest_area;
   return L.divIcon({
@@ -121,15 +131,17 @@ const TruckMap = ({ origin, destination, onOriginSelect, onDestSelect, osrmGeome
     const bounds = [];
 
     if (origin?.coords) {
+      const originName = escapeHtml(origin.name || 'จุดเริ่มต้น');
       markerO.current = L.marker(origin.coords, { icon: iconA })
-        .bindPopup(`<b style="font-family:'Sarabun',sans-serif">${origin.name}</b><br><small style="color:#475569">จุดเริ่มต้น</small>`)
+        .bindPopup(`<b style="font-family:'Sarabun',sans-serif">${originName}</b><br><small style="color:#475569">จุดเริ่มต้น</small>`)
         .addTo(map);
       bounds.push(origin.coords);
     }
 
     if (destination?.coords) {
+      const destinationName = escapeHtml(destination.name || 'จุดหมาย');
       markerD.current = L.marker(destination.coords, { icon: iconB })
-        .bindPopup(`<b style="font-family:'Sarabun',sans-serif">${destination.name}</b><br><small style="color:#475569">จุดหมาย</small>`)
+        .bindPopup(`<b style="font-family:'Sarabun',sans-serif">${destinationName}</b><br><small style="color:#475569">จุดหมาย</small>`)
         .addTo(map);
       bounds.push(destination.coords);
     }
@@ -166,7 +178,7 @@ const TruckMap = ({ origin, destination, onOriginSelect, onDestSelect, osrmGeome
     } else if (bounds.length === 1) {
       map.flyTo(bounds[0], 10, { duration: 1 });
     }
-  }, [origin, destination]);
+  }, [origin, destination, osrmGeometry]);
 
   // ── Resize fix when panel opens ───────────────────────────────────────────
   useEffect(() => {
@@ -184,12 +196,16 @@ const TruckMap = ({ origin, destination, onOriginSelect, onDestSelect, osrmGeome
     pois.forEach(poi => {
       const cfg = POI_CONFIG[poi.type] || POI_CONFIG.rest_area;
       const marker = L.marker([poi.lat, poi.lng], { icon: makePOIIcon(poi.type) });
+      const name = escapeHtml(poi.name || cfg.label);
+      const brand = escapeHtml(poi.brand);
+      const opening = escapeHtml(poi.opening);
+      const phone = escapeHtml(poi.phone);
       marker.bindPopup(`
         <div style="font-family:'Sarabun',sans-serif;min-width:180px;padding:4px">
-          <div style="font-size:14px;margin-bottom:2px">${cfg.emoji} <b>${poi.name || cfg.label}</b></div>
-          ${poi.brand    ? `<div style="font-size:11px;color:#475569">🏷 ${poi.brand}</div>` : ''}
-          ${poi.opening  ? `<div style="font-size:11px;color:#475569">🕐 ${poi.opening}</div>` : ''}
-          ${poi.phone    ? `<div style="font-size:11px;color:#475569">📞 ${poi.phone}</div>` : ''}
+          <div style="font-size:14px;margin-bottom:2px">${cfg.emoji} <b>${name}</b></div>
+          ${brand    ? `<div style="font-size:11px;color:#475569">🏷 ${brand}</div>` : ''}
+          ${opening  ? `<div style="font-size:11px;color:#475569">🕐 ${opening}</div>` : ''}
+          ${phone    ? `<div style="font-size:11px;color:#475569">📞 ${phone}</div>` : ''}
           <div style="font-size:9px;color:#94A3B8;margin-top:4px">📍 ${poi.lat.toFixed(5)}, ${poi.lng.toFixed(5)}</div>
           <div style="font-size:9px;color:#94A3B8">ข้อมูล: OpenStreetMap Overpass API</div>
         </div>
